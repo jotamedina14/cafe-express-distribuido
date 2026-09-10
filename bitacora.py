@@ -26,7 +26,12 @@ def configurar_bitacora(componente: str, nivel: int | str = logging.INFO,
         manejador.close()
 
     formato = logging.Formatter(FORMATO, FORMATO_FECHA)
-    archivo = logging.FileHandler(carpeta / f"{componente}.log", mode="w", encoding="utf-8")
+    # Modo anexar: si se lanza por error un segundo proceso con el mismo
+    # nombre, no borra el log del que ya está corriendo.
+    ruta = carpeta / f"{componente}.log"
+    with open(ruta, "a", encoding="utf-8") as previo:
+        previo.write(f"\n===== inicio de {componente} =====\n")
+    archivo = logging.FileHandler(ruta, mode="a", encoding="utf-8")
     archivo.setFormatter(formato)
     logger.addHandler(archivo)
     if consola:
