@@ -4,6 +4,8 @@ Prototipo de una red de sucursales de café en la que los pedidos entran por un 
 
 Proyecto de la Unidad 2 del curso Arquitectura de Software: *Tejiendo redes: arquitectura de software entre hilos y nodos*.
 
+Autor: **Yonathan López Blanco**. El usuario de GitHub `jotamedina14` es mi cuenta personal; los commits aparecen como *Yonathan Blanco*.
+
 - Python 3.9 o superior, **solo biblioteca estándar** (`socket`, `threading`, `json`, `queue`, `logging`, `argparse`). No hay nada que instalar.
 - Probado en Linux con Python 3.12. `demo.py` funciona también en Windows y macOS.
 
@@ -178,7 +180,7 @@ Medidos en un portátil Linux de 12 núcleos lógicos con Python 3.12; todos los
 | 1 nodo x 8 hilos | 10.65 | x1.99 | 5.69 |
 | 1 nodo x 12 hilos | 15.28 | x2.85 | 3.97 |
 
-Cuando el trabajo es de espera, agregar hilos a un nodo o agregar nodos rinde casi lo mismo.
+Cuando el trabajo es de espera, agregar hilos a un nodo o agregar nodos rinde casi lo mismo: mientras un hilo espera, el intérprete de Python libera el GIL y los demás hilos avanzan, así que los hilos sí se solapan.
 
 **Trabajo de CPU y el GIL** (30 pedidos de cálculo puro):
 
@@ -188,7 +190,7 @@ Cuando el trabajo es de espera, agregar hilos a un nodo o agregar nodos rinde ca
 | 1 nodo x 3 hilos (vertical) | 2.76 | x0.97 |
 | 3 nodos x 1 hilo (horizontal) | 7.16 | x2.52 |
 
-Aquí está la diferencia de fondo: con cálculo puro, más hilos en un mismo proceso **no aceleran nada**, porque el GIL de Python deja ejecutar un solo hilo a la vez. Más nodos sí, porque cada nodo es un proceso con su propio intérprete.
+Aquí está la diferencia de fondo: con cálculo puro, el hilo que calcula nunca suelta el GIL mientras trabaja, así que más hilos en un mismo proceso **no aceleran nada**: se turnan, no se solapan. Más nodos sí, porque cada nodo es un proceso con su propio intérprete y su propio GIL. Los dos resultados no se contradicen: escalar en vertical con hilos sirve para trabajo de espera, y para trabajo de cálculo solo sirve escalar en horizontal (más procesos o más máquinas).
 
 **Balanceo con nodos de distinta capacidad** (2, 4 y 4 hilos): `menor_carga` logra 12.16 ped/s y p95 de 8.7 s, frente a 8.47 ped/s y p95 de 12.1 s de `round_robin`, que satura al nodo de 2 hilos (+44 % de throughput).
 
@@ -238,5 +240,5 @@ cafe-express-distribuido/
 │   └── experimentos.py   matriz de escalabilidad
 ├── tests/                pruebas unitarias y de integración
 ├── demo.sh, demo.py      demostración
-└── resultados/           CSV y tablas (se generan al correr las pruebas)
+└── resultados/           CSV y tablas de las corridas documentadas en este README
 ```
