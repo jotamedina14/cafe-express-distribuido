@@ -78,6 +78,19 @@ def decodificar(linea: bytes | str) -> dict:
     return mensaje
 
 
+def cerrar_escucha(sock: socket.socket) -> None:
+    """Cierra un socket de escucha despertando al hilo bloqueado en accept().
+
+    En Linux, close() por sí solo no interrumpe un accept() en curso: el
+    puerto seguiría aceptando conexiones después de "apagado" el servidor.
+    """
+    try:
+        sock.shutdown(socket.SHUT_RDWR)
+    except OSError:
+        pass
+    sock.close()
+
+
 class Canal:
     """Un socket TCP que habla el protocolo.
 

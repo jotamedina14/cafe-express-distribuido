@@ -39,7 +39,7 @@ class ServidorFalso:
         self.canales.clear()
 
     def detener(self):
-        self.sock.close()
+        p.cerrar_escucha(self.sock)
         self.cortar_conexiones()
 
 

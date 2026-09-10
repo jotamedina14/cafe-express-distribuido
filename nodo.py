@@ -90,7 +90,7 @@ class Nodo:
         """Apaga el nodo cerrando todas sus conexiones (como una caída)."""
         self._detener.set()
         if self._servidor:
-            self._servidor.close()
+            p.cerrar_escucha(self._servidor)
         with self._candado:
             canales = list(self._conexiones)
             if self._canal_coordinador:
@@ -154,6 +154,9 @@ class Nodo:
             try:
                 conexion, _ = self._servidor.accept()
             except OSError:
+                return
+            if self._detener.is_set():
+                conexion.close()
                 return
             threading.Thread(target=self._atender_asignaciones, args=(p.Canal(conexion),),
                              name=f"{self.nodo_id}-asignaciones-{next(contador)}",
