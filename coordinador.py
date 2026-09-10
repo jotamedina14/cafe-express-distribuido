@@ -343,7 +343,7 @@ class ServidorTCP:
             except OSError:
                 return
             threading.Thread(target=self._manejador, args=(conexion, direccion),
-                             name=f"{self.nombre}-{next(contador)}", daemon=True).start()
+                             name=f"conexion-{self.nombre}-{next(contador)}", daemon=True).start()
 
 
 # ============================ Mediator + capa API ============================
@@ -359,9 +359,9 @@ class Coordinador:
         self.estrategia = crear_estrategia(config.estrategia)
         self.despachador = Despachador(self.registro, self.pedidos, self.sujeto,
                                        self.estrategia, self.log)
-        self._servidor_clientes = ServidorTCP("cliente", config.host, config.puerto_clientes,
+        self._servidor_clientes = ServidorTCP("clientes", config.host, config.puerto_clientes,
                                               self._atender_cliente)
-        self._servidor_nodos = ServidorTCP("nodo", config.host, config.puerto_nodos,
+        self._servidor_nodos = ServidorTCP("nodos", config.host, config.puerto_nodos,
                                            self._atender_nodo)
         self._canales: set[p.Canal] = set()
         self._candado = threading.Lock()
@@ -404,6 +404,7 @@ class Coordinador:
     def _atender_cliente(self, conexion: socket.socket, direccion) -> None:
         canal = self._seguir_canal(p.Canal(conexion))
         origen = f"{direccion[0]}:{direccion[1]}"
+        threading.current_thread().name = f"cliente-{direccion[1]}"
         cliente = ObservadorRemoto(canal, origen, self.log)
         self.log.info("Cliente conectado desde %s", origen)
         try:
@@ -482,6 +483,7 @@ class Coordinador:
                              motivo="el primer mensaje de un nodo debe ser REGISTRO")
                 return
             nodo_id = self._registrar_nodo(mensaje, direccion[0], canal)
+            threading.current_thread().name = f"control-{nodo_id}"
             canal.enviar(p.REGISTRO_OK, nodo_id=nodo_id, intervalo_latido=self.config.intervalo_latido)
             while (mensaje := canal.recibir()) is not None:
                 if mensaje["tipo"] == p.LATIDO:
