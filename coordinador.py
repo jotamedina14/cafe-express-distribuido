@@ -306,7 +306,7 @@ class Despachador:
                 self.pedidos.desasignar(pedido.pedido_id, nodo.nodo_id)
                 self.registro.sumar_carga(nodo.nodo_id, -1)
                 continue
-            self.log.info("Pedido #%d (%s) -> %s [%s, carga %d/%d hilos]", pedido.pedido_id,
+            self.log.debug("Pedido #%d (%s) -> %s [%s, carga %d/%d hilos]", pedido.pedido_id,
                           pedido.producto, nodo.nodo_id, self.estrategia.nombre,
                           nodo.carga, nodo.hilos)
             # Si el nodo ya reportó un estado posterior por su conexión de
@@ -450,7 +450,7 @@ class Coordinador:
         # La respuesta sale antes que cualquier aviso del pedido: van por la misma cola.
         cliente.enviar(p.PEDIDO_ACEPTADO, ref=ref, pedido_id=pedido.pedido_id)
         if nuevo:
-            self.log.info("Pedido #%d aceptado: %s x%d (%s)", pedido.pedido_id, producto,
+            self.log.debug("Pedido #%d aceptado: %s x%d (%s)", pedido.pedido_id, producto,
                           cantidad, pedido.sucursal)
             self.despachador.encolar(pedido.pedido_id)
 
@@ -538,7 +538,7 @@ class Coordinador:
             return
         if estado == ENTREGADO:
             self.registro.completar(nodo_id)
-            self.log.info("Pedido #%d entregado por %s", pedido_id, nodo_id)
+            self.log.debug("Pedido #%d entregado por %s", pedido_id, nodo_id)
         for evento in eventos:
             self.sujeto.notificar(pedido_id, evento)
 
@@ -622,7 +622,9 @@ def main() -> None:
     parser.add_argument("--resumen-cada", type=float, default=10.0,
                         help="segundos entre resúmenes en el log (0 = nunca)")
     parser.add_argument("--logs", help="carpeta de logs (por defecto ./logs)")
-    parser.add_argument("--nivel-log", default="INFO", choices=("DEBUG", "INFO", "WARNING"))
+    parser.add_argument("--nivel-log", default="INFO", choices=("DEBUG", "INFO", "WARNING"),
+                        help="DEBUG muestra la traza de cada pedido (útil en la demo; "
+                             "reduce la capacidad del coordinador ~30%%)")
     parser.add_argument("--silencioso", action="store_true", help="no escribir logs en consola")
     args = parser.parse_args()
 
