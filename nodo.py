@@ -41,6 +41,7 @@ class ConfigNodo:
     puerto_coordinador: int = p.PUERTO_NODOS
     factor_tiempo: float = 1.0
     trabajo: str = "espera"
+    calibracion: float = 0.0  # iteraciones/s para trabajo "cpu"; 0 = medir al arrancar
     carpeta_logs: str | None = None
     consola: bool = True
     nivel_log: str = "INFO"
@@ -238,15 +239,33 @@ class Nodo:
         return True
 
     def _calibrar_cpu(self) -> None:
-        """Mide cuántas iteraciones de cálculo hace un hilo por segundo."""
+        if self.config.calibracion > 0:
+            self._iteraciones_por_segundo = self.config.calibracion
+            origen = "recibida por parámetro"
+        else:
+            self._iteraciones_por_segundo = calibrar_cpu()
+            origen = "medida al arrancar"
+        self.log.info("Calibración CPU (%s): %.0f iteraciones/s por hilo",
+                      origen, self._iteraciones_por_segundo)
+
+
+def calibrar_cpu(intentos: int = 5, duracion: float = 0.1) -> float:
+    """Iteraciones de cálculo por segundo de un hilo, sin competencia.
+
+    Se toma el mejor de varios intentos cortos: un intento lento solo puede
+    deberse a ruido (otro proceso, frecuencia baja del procesador), nunca a
+    que la máquina sea más rápida de lo que es.
+    """
+    mejor = 0.0
+    for _ in range(intentos):
         iteraciones, x = 0, 1
         inicio = time.perf_counter()
-        while time.perf_counter() - inicio < 0.3:
+        while time.perf_counter() - inicio < duracion:
             for _ in range(20_000):
                 x = (x * 1103515245 + 12345) & 0x7FFFFFFF
             iteraciones += 20_000
-        self._iteraciones_por_segundo = iteraciones / (time.perf_counter() - inicio)
-        self.log.info("Calibración CPU: %.0f iteraciones/s por hilo", self._iteraciones_por_segundo)
+        mejor = max(mejor, iteraciones / (time.perf_counter() - inicio))
+    return mejor
 
 
 def main() -> None:
@@ -261,6 +280,9 @@ def main() -> None:
     parser.add_argument("--factor-tiempo", type=float, default=1.0,
                         help="multiplica los tiempos de preparación (0.5 = el doble de rápido)")
     parser.add_argument("--trabajo", choices=("espera", "cpu"), default="espera")
+    parser.add_argument("--calibracion", type=float, default=0.0,
+                        help="iteraciones/s para --trabajo cpu (0 = medir al arrancar). Pasar el "
+                             "mismo valor a todos los nodos garantiza el mismo trabajo por pedido")
     parser.add_argument("--logs", help="carpeta de logs (por defecto ./logs)")
     parser.add_argument("--nivel-log", default="INFO", choices=("DEBUG", "INFO", "WARNING"))
     parser.add_argument("--silencioso", action="store_true", help="no escribir logs en consola")
@@ -271,7 +293,8 @@ def main() -> None:
     config = ConfigNodo(
         nodo_id=args.nodo_id or f"nodo-{args.puerto}", host=args.host, puerto=args.puerto,
         hilos=args.hilos, coordinador=args.coordinador, puerto_coordinador=args.puerto_coordinador,
-        factor_tiempo=args.factor_tiempo, trabajo=args.trabajo, carpeta_logs=args.logs,
+        factor_tiempo=args.factor_tiempo, trabajo=args.trabajo, calibracion=args.calibracion,
+        carpeta_logs=args.logs,
         consola=not args.silencioso, nivel_log=args.nivel_log,
     )
     nodo = Nodo(config).iniciar()

@@ -25,8 +25,10 @@ MARCA_INICIO = "===== inicio de"
 class SistemaLocal:
     def __init__(self, hilos=(4, 4, 4), estrategia="menor_carga", reasignar=True,
                  trabajo="espera", factor_tiempo=1.0, puerto_base=5100,
-                 carpeta_logs: str | Path | None = None, extra_coordinador=()):
+                 carpeta_logs: str | Path | None = None, extra_coordinador=(),
+                 calibracion: float = 0.0):
         self.hilos = tuple(hilos)
+        self.calibracion = calibracion
         self.estrategia = estrategia
         self.reasignar = reasignar
         self.trabajo = trabajo
@@ -60,6 +62,7 @@ class SistemaLocal:
                 "nodo.py", "--id", nodo_id, "--puerto", self.puerto_base + 1000 + int(nodo_id[5:]),
                 "--hilos", hilos, "--puerto-coordinador", self.puerto_nodos,
                 "--trabajo", self.trabajo, "--factor-tiempo", self.factor_tiempo,
+                "--calibracion", self.calibracion,
             ])
         self._esperar_log("coordinador", "registrado desde", len(self.hilos),
                           timeout=10 + (2 * len(self.hilos) if self.trabajo == "cpu" else 0))

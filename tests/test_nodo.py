@@ -1,6 +1,5 @@
 """El nodo se prueba contra un coordinador falso: solo depende del protocolo."""
 import tempfile
-import threading
 import time
 import unittest
 from collections import defaultdict
@@ -20,7 +19,6 @@ class CoordinadorDeNodos:
         self.registros = []
         self.latidos = 0
         self.estados = defaultdict(list)
-        self.hilos_por_pedido = {}
         self.servidor = ServidorFalso(self.atender)
 
     def atender(self, canal):
@@ -66,13 +64,13 @@ class PruebasNodo(unittest.TestCase):
         self.assertEqual(self.coordinador.estados[1], [EN_PREPARACION, LISTO, ENTREGADO])
 
     def test_los_hilos_trabajan_en_paralelo(self):
-        # 6 tintos de ~20 ms con 3 hilos: en paralelo ~40 ms, en serie ~120 ms.
+        # 6 mocaccinos de ~50 ms con 3 hilos: en paralelo ~0.1 s, en serie ~0.3 s.
         inicio = time.monotonic()
         for pid in range(10, 16):
-            self.proxy.asignar({"pedido_id": pid, "producto": "tinto", "cantidad": 1})
+            self.proxy.asignar({"pedido_id": pid, "producto": "mocaccino", "cantidad": 1})
         self.assertTrue(esperar(lambda: all(ENTREGADO in self.coordinador.estados[pid]
                                             for pid in range(10, 16))))
-        self.assertLess(time.monotonic() - inicio, 0.11)
+        self.assertLess(time.monotonic() - inicio, 0.22)
         self.assertEqual(self.nodo.procesados, 6)
 
     def test_asignacion_repetida_no_se_prepara_dos_veces(self):

@@ -30,6 +30,7 @@ RAIZ = Path(__file__).resolve().parent.parent
 if str(RAIZ) not in sys.path:
     sys.path.insert(0, str(RAIZ))
 
+from nodo import calibrar_cpu  # noqa: E402
 from pruebas.carga import CARPETA_RESULTADOS, ejecutar_carga, exportar_csv  # noqa: E402
 from pruebas.entorno import SistemaLocal  # noqa: E402
 
@@ -86,7 +87,7 @@ ESCENARIOS = {
 }
 
 
-def ejecutar(nombre: str, rapido: bool, puerto: list[int]) -> list[dict]:
+def ejecutar(nombre: str, rapido: bool, puerto: list[int], calibracion: float) -> list[dict]:
     escenario = ESCENARIOS[nombre]
     print(f"\n### {escenario['titulo']}")
     filas = []
@@ -97,7 +98,7 @@ def ejecutar(nombre: str, rapido: bool, puerto: list[int]) -> list[dict]:
         puerto[0] += 10
         sistema = SistemaLocal(hilos=c["hilos"], estrategia=c["estrategia"], trabajo=c["trabajo"],
                                factor_tiempo=factor, puerto_base=puerto[0],
-                               extra_coordinador=c["extra"],
+                               extra_coordinador=c["extra"], calibracion=calibracion,
                                carpeta_logs=RAIZ / "logs" / "experimentos" / nombre / c["etiqueta"]
                                .replace(" ", "_").replace("@", "a").replace("/", "-")
                                .replace(",", "").replace("(", "").replace(")", ""))
@@ -157,9 +158,14 @@ def main() -> None:
 
     print(f"Máquina: {os.cpu_count()} núcleos lógicos | Python {sys.version.split()[0]} | "
           f"{sys.platform}")
+    # Una sola calibración para todos los nodos de CPU: así cada configuración
+    # hace exactamente la misma cantidad de cálculo por pedido.
+    calibracion = calibrar_cpu() if "gil" in nombres else 0.0
+    if calibracion:
+        print(f"Calibración CPU compartida: {calibracion:.0f} iteraciones/s por hilo")
     inicio, puerto, todas, secciones = time.monotonic(), [args.puerto_base], [], []
     for nombre in nombres:
-        filas = ejecutar(nombre, args.rapido, puerto)
+        filas = ejecutar(nombre, args.rapido, puerto, calibracion)
         todas += filas
         secciones.append(tabla(nombre, filas))
 
