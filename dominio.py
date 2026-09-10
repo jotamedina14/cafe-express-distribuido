@@ -69,23 +69,32 @@ class Pedido:
     def asignar(self, nodo_id: str) -> None:
         self.nodo_id = nodo_id
 
-    def avanzar(self, nuevo_estado: str, nodo_id: str) -> bool:
+    def avanzar(self, nuevo_estado: str, nodo_id: str) -> list[str]:
         """Aplica un cambio de estado reportado por un nodo.
 
         Solo se acepta si (1) viene del nodo que tiene asignado el pedido y
         (2) mueve el pedido hacia adelante. Así se descartan los mensajes
         tardíos de un nodo al que ya se le quitó el pedido, y los que llegan
         desordenados por viajar en conexiones distintas.
+
+        Los estados son una secuencia estricta: si llega "en_preparacion"
+        antes que "recibido", es que "recibido" ya ocurrió. Por eso devuelve
+        la lista de estados recorridos, incluidos los que se saltaron, para
+        que el cliente reciba siempre el ciclo completo y en orden. Una
+        lista vacía significa que el cambio se descartó.
         """
         if nuevo_estado not in ESTADOS:
             raise ValueError(f"estado desconocido: {nuevo_estado!r}")
         if nodo_id != self.nodo_id:
-            return False
-        if _ORDEN[nuevo_estado] <= _ORDEN[self.estado]:
-            return False
+            return []
+        actual, objetivo = _ORDEN[self.estado], _ORDEN[nuevo_estado]
+        if objetivo <= actual:
+            return []
+        recorridos = [e for e in ESTADOS if actual < _ORDEN[e] <= objetivo]
+        ahora = time.time()
+        self.historial.extend((estado, ahora, nodo_id) for estado in recorridos)
         self.estado = nuevo_estado
-        self.historial.append((nuevo_estado, time.time(), nodo_id))
-        return True
+        return recorridos
 
     def liberar(self) -> None:
         """Devuelve el pedido a pendiente para reasignarlo a otro nodo."""

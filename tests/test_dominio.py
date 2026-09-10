@@ -21,8 +21,11 @@ class PruebasPedido(unittest.TestCase):
         self.assertFalse(self.pedido.avanzar(RECIBIDO, "nodo-1"))
         self.assertEqual(self.pedido.estado, EN_PREPARACION)
 
-    def test_puede_saltarse_un_estado_que_llego_tarde(self):
-        self.assertTrue(self.pedido.avanzar(EN_PREPARACION, "nodo-1"))
+    def test_completa_los_estados_que_llegaron_tarde(self):
+        # "en_preparacion" llegó antes que "recibido": ambos cuentan, en orden.
+        self.assertEqual(self.pedido.avanzar(EN_PREPARACION, "nodo-1"), [RECIBIDO, EN_PREPARACION])
+        self.assertEqual(self.pedido.avanzar(RECIBIDO, "nodo-1"), [])
+        self.assertEqual([h[0] for h in self.pedido.historial], [RECIBIDO, EN_PREPARACION])
 
     def test_descarta_mensajes_de_otro_nodo(self):
         self.assertFalse(self.pedido.avanzar(RECIBIDO, "nodo-2"))
