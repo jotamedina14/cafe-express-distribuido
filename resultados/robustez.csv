@@ -1,0 +1,5 @@
+escenario,descripcion,estrategia,pedidos,entregados,perdidos,reasignados,deteccion_s,reasignacion_s,circuito_abierto_s,timeouts_asignacion,latencia_prom_s,latencia_p95_s,latencia_max_s,throughput,aprobado
+caida,"SIGKILL a nodo-2, con reasignación",menor_carga,120,120,0,3,0.002,0.003,,0,0.778,1.186,1.6,9.28,True
+sin_reasignacion,"SIGKILL a nodo-2, SIN reasignación (línea base)",menor_carga,120,118,2,0,0.002,,,0,0.742,1.153,1.215,9.16,True
+congelado,"SIGSTOP a nodo-2, timeout de asignación 1 s",round_robin,120,120,0,1,6.364,6.364,3.008,3,2.05,3.004,9.675,8.24,True
+congelado_ajustado,"SIGSTOP a nodo-2, timeout de asignación 0.25 s (ajuste)",round_robin,120,120,0,2,6.366,6.366,0.757,3,0.884,1.18,7.985,9.2,True
