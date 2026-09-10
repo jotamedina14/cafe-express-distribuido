@@ -111,7 +111,10 @@ class Canal:
     def recibir(self) -> dict | None:
         """Bloquea hasta el siguiente mensaje; None si el otro extremo cerró."""
         while True:
-            linea = self._lector.readline(LIMITE_MENSAJE + 1)
+            try:
+                linea = self._lector.readline(LIMITE_MENSAJE + 1)
+            except ValueError:  # otro hilo cerró el canal mientras leíamos
+                return None
             if not linea:
                 return None
             if len(linea) > LIMITE_MENSAJE:
