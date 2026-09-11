@@ -98,7 +98,7 @@ class Nodo:
                 canales.append(self._canal_coordinador)
         for canal in canales:
             canal.cerrar()
-        self.log.info("Nodo %s detenido (%d pedidos procesados)", self.nodo_id, self.procesados)
+        self.log.info("Nodo %s detenido (%d pedidos entregados)", self.nodo_id, self.procesados)
 
     # --- conexión con el coordinador: registro y latidos ------------------------
 
@@ -202,6 +202,7 @@ class Nodo:
             pedido_id = pedido["pedido_id"]
             with self._candado:
                 self.activos += 1
+            entregado = False
             try:
                 self._reportar(pedido_id, EN_PREPARACION)
                 duracion = (tiempo_preparacion(pedido["producto"], pedido.get("cantidad", 1))
@@ -213,12 +214,15 @@ class Nodo:
                 if self._detener.wait(TIEMPO_ENTREGA * self.config.factor_tiempo):
                     return
                 self._reportar(pedido_id, ENTREGADO)
+                entregado = True
                 self.log.info("Pedido #%d entregado (%s, %.2f s en el hilo)",
                               pedido_id, pedido["producto"], time.perf_counter() - inicio)
             finally:
                 with self._candado:
                     self.activos -= 1
-                    self.procesados += 1
+                    # Un pedido abandonado a medias porque el nodo se apagó
+                    # no cuenta: el coordinador lo reasigna a otro nodo.
+                    self.procesados += entregado
                     self._en_curso.discard(pedido_id)
 
     def _preparar(self, segundos: float) -> bool:
