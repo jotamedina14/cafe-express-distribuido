@@ -112,7 +112,7 @@ python demo.py             # cualquier sistema operativo, Windows incluido
 python demo.py interactivo # igual, con el cliente interactivo
 ```
 
-### Panel de demostración (una sola ventana)
+### Panel de demostración (una sola ventana, recomendado para la presentación)
 
 ```bash
 python3 panel.py
@@ -131,7 +131,7 @@ Levanta el coordinador y los tres nodos como procesos independientes y muestra l
 
 Los tiempos de preparación van triplicados para que se alcance a ver cada estado; `--factor-tiempo 1` usa los reales. Los eventos clave del coordinador (registros, caídas, circuito) quedan fijos arriba de su recuadro para que no se pierdan entre la traza.
 
-### Paso a paso, una terminal por componente (recomendado para la presentación)
+### Paso a paso, una terminal por componente
 
 ```bash
 python3 coordinador.py --estrategia menor_carga --nivel-log DEBUG   # terminal 1
