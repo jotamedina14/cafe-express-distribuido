@@ -26,6 +26,7 @@ import random
 import signal
 import subprocess
 import sys
+import textwrap
 import threading
 import time
 from pathlib import Path
@@ -300,15 +301,16 @@ def escribir(ventana, y: int, x: int, texto: str, ancho: int, atributo: int = 0)
 
 
 def envolver(texto: str, ancho: int) -> list[str]:
+    """Parte la línea por palabras; solo corta una palabra si no cabe sola."""
     if ancho <= 0:
         return []
-    return [texto[i:i + ancho] for i in range(0, len(texto), ancho)] or [""]
+    return textwrap.wrap(texto, ancho, break_on_hyphens=False, subsequent_indent="  ") or [""]
 
 
 def dibujar_recuadro(pantalla, colores, y, x, alto, ancho, recuadro, estado, fijas=()):
     if alto < 2 or ancho < 10:
         return
-    color_estado = colores.get("ok" if "activo" in estado else
+    color_estado = colores.get("ok" if ("activo" in estado or "● conectado" in estado) else
                                "error" if "caído" in estado else "atenuado", 0)
     escribir(pantalla, y, x, f" {recuadro.titulo} ", ancho, curses.A_REVERSE | curses.A_BOLD)
     escribir(pantalla, y, x + len(recuadro.titulo) + 3, estado, max(0, ancho - len(recuadro.titulo) - 3),
