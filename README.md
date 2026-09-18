@@ -112,6 +112,25 @@ python demo.py             # cualquier sistema operativo, Windows incluido
 python demo.py interactivo # igual, con el cliente interactivo
 ```
 
+### Panel de demostración (una sola ventana)
+
+```bash
+python3 panel.py
+```
+
+Levanta el coordinador y los tres nodos como procesos independientes y muestra la salida de cada uno en su propio recuadro, junto con un cliente de sucursal integrado. Todo se maneja con teclas:
+
+| Tecla | Acción |
+|---|---|
+| `i` | iniciar: el coordinador y luego los tres nodos, uno a uno |
+| `p` | un pedido (capuchino x2) |
+| `v` | diez pedidos al azar |
+| `r` | ráfaga de treinta pedidos |
+| `1` `2` `3` | tumbar ese nodo (equivale a Ctrl+C) o, si está caído, levantarlo de nuevo |
+| `q` | salir y detener todo |
+
+Los tiempos de preparación van triplicados para que se alcance a ver cada estado; `--factor-tiempo 1` usa los reales. Los eventos clave del coordinador (registros, caídas, circuito) quedan fijos arriba de su recuadro para que no se pierdan entre la traza.
+
 ### Paso a paso, una terminal por componente (recomendado para la presentación)
 
 ```bash
@@ -239,6 +258,7 @@ cafe-express-distribuido/
 │   ├── robustez.py       caída y congelamiento de nodos
 │   └── experimentos.py   matriz de escalabilidad
 ├── tests/                pruebas unitarias y de integración
-├── demo.sh, demo.py      demostración
+├── panel.py              demostración en una sola ventana
+├── demo.sh, demo.py      demostración con procesos en segundo plano
 └── resultados/           CSV y tablas de las corridas documentadas en este README
 ```
